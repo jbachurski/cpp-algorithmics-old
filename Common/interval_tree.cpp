@@ -2,65 +2,56 @@
 
 using namespace std;
 
-uint32_t pow2_ge(uint32_t n)
+uint64_t pow2_ge(uint64_t n)
 {
-    uint32_t r = 1;
+    uint64_t r = 1;
     while(r < n) r *= 2;
     return r;
 }
 
-// F - set new value to parent or do not replace best
-//     if F(old_value, new_value)
-template<size_t MAX_SIZE = 100000, typename FT = greater<uint32_t> >
+template<size_t SIZE>
 struct interval_tree
 {
-    FT F;
-    const uint32_t root = 1;
-    const uint32_t inf = numeric_limits<uint32_t>::max();
+    static const size_t TSIZE = 4 * SIZE;
+    const uint64_t root = 1;
     size_t tsize;
-    array<uint32_t, MAX_SIZE+1> values;
-    interval_tree(size_t least_size = MAX_SIZE, FT f = FT())
+    array<uint64_t, TSIZE> values;
+    interval_tree(size_t least_size = SIZE)
     {
-        F = f;
         tsize = pow2_ge(least_size) * 2;
-        for(uint32_t i = 0; i < values.size(); i++)
-            values[i+1] = inf;
+        for(uint64_t i = 0; i < values.size(); i++)
+            values[i+1] = 0;
     }
-    inline uint32_t parent(uint32_t node)
+    inline uint64_t parent(uint64_t node)
     {
         return node / 2;
     }
-    inline uint32_t child_left(uint32_t node)
+    inline uint64_t child_left(uint64_t node)
     {
         return node * 2;
     }
-    inline uint32_t child_right(uint32_t node)
+    inline uint64_t child_right(uint64_t node)
     {
         return node * 2 + 1;
     }
-    inline uint32_t leaf(uint32_t i = 0)
+    inline uint64_t leaf(uint64_t i = 0)
     {
         return tsize / 2 + i;
     }
-    void set_value(uint32_t node, uint32_t value)
+    void set_value(uint64_t node, uint64_t value)
     {
         values[node] = value;
         while(node != root)
         {
             node = parent(node);
-            values[node] = value;
-            if(F(values[node], values[child_left(node)]))
-                values[node] = values[child_left(node)];
-            if(F(values[node], values[child_right(node)]))
-                values[node] = values[child_right(node)];
+            values[node] = max(values[child_left(node)], values[child_right(node)]);
         }
     }
-    // tbegin, tend - current node bounds; sbegin, send - searched bounds
-    uint32_t find_best(uint32_t node, uint32_t tbegin, uint32_t tend, uint32_t sbegin, uint32_t send)
+    uint64_t find_best(uint64_t node, uint64_t tbegin, uint64_t tend, uint64_t sbegin, uint64_t send)
     {
         if(send < tbegin or tend < sbegin) // disjoint
         {
-            return inf;
+            return 0;
         }
         else if(sbegin <= tbegin and tend <= send) // entire
         {
@@ -68,9 +59,17 @@ struct interval_tree
         }
         else // part
         {
-            uint32_t left = find_best(child_left(node), tbegin, (tbegin+tend)/2, sbegin, send);
-            uint32_t right = find_best(child_right(node), (tbegin+tend)/2+1, tend, sbegin, send);
-            return F(left, right) ? right : left;
+            uint64_t left = find_best(child_left(node), tbegin, (tbegin+tend)/2, sbegin, send);
+            uint64_t right = find_best(child_right(node), (tbegin+tend)/2+1, tend, sbegin, send);
+            return max(left, right);
         }
+    }
+    uint64_t find_best(uint64_t sbegin, uint64_t send)
+    {
+        return find_best(root, 0, tsize / 2 - 1, sbegin, send);
+    }
+    uint64_t find_best()
+    {
+        return find_best(root, 0, tsize / 2 - 1, 0, tsize / 2 - 1);
     }
 };
