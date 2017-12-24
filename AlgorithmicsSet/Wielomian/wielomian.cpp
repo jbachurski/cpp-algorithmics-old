@@ -1,24 +1,30 @@
 #include <bits/stdc++.h>
-#define F(x) (a0+x*(a1+x*(a2+x*(a3+x*(a4+x*a5)))))
 
 using namespace std;
 
-const double precision = 0.00001;
+long double a5, a4, a3, a2, a1, a0;
+
+long double W(long double x)
+{
+    return a0 + x*(a1 + x*(a2 + x*(a3 + x*(a4 + x*a5))));
+}
+
+short sgn(long double n)
+{
+    return n < 0 ? -1 : 1;
+}
 
 int main()
 {
-    double a5, a4, a3, a2, a1, a0;
     cin >> a5 >> a4 >> a3 >> a2 >> a1 >> a0;
-    double lo = -100000, hi = 100000;
-    while(abs(hi - lo) > precision)
+    long double lo = -1000, hi = 1000;
+    while(abs(W((lo+hi)/2)) > 0.000001)
     {
-        double x = (lo + hi) / 2;
-        double x1 = (x + hi) / 2, x2 = (lo + x) / 2;
-        cout << F(x1) << " " << F(x2) << endl;
-        if(abs(F(x1)) < abs(F(x2)))
-            lo = x;
-        else
+        long double x = (lo+hi)/2;
+        if(sgn(W(lo)) != sgn(W(x)))
             hi = x;
+        else
+            lo = x;
     }
-    cout << fixed << setprecision(4) << (lo + hi) / 2;
+    cout << fixed << setprecision(6) << (lo+hi)/2;
 }

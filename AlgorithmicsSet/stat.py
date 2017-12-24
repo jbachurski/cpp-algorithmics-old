@@ -6,3 +6,4 @@ for filename in os.listdir():
         continue
     c[filename[0]] += 1
 print(c.most_common(), sum(c.values()))
+input()
