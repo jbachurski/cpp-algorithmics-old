@@ -10,15 +10,33 @@ int main()
     uint32_t cities;
     cin >> cities;
     static array<vector<uint32_t>, MAX> next_to;
-    static array<uint32_t, MAX> active_next_to;
     for(uint32_t i = 0; i < cities - 1; i++)
     {
         uint32_t a, b;
         cin >> a >> b; a--; b--;
         next_to[a].push_back(b);
-        active_next_to[a]++;
         next_to[b].push_back(a);
-        active_next_to[b]++;
+    }
+    static array<uint32_t, MAX> parent, active_children;
+    static array<bool, MAX> active;
+    fill(active.begin(), active.begin() + cities, true);
+    queue<uint32_t> to_visit;
+    static array<bool, MAX> visited;
+    to_visit.push(0);
+    visited[0] = true;
+    while(not to_visit.empty())
+    {
+        uint32_t current = to_visit.front(); to_visit.pop();
+        for(uint32_t nxt : next_to[current])
+        {
+            if(not visited[nxt])
+            {
+                parent[nxt] = current;
+                active_children[current]++;
+                visited[nxt] = true;
+                to_visit.push(nxt);
+            }
+        }
     }
     uint32_t scount;
     cin >> scount;
@@ -30,15 +48,15 @@ int main()
         uint32_t z = abs(iz) - 1;
         if(iz > 0)
         {
-            for(uint32_t n : next_to[z])
-                active_next_to[n]--;
-            groups += active_next_to[z] - 1;
+            active[z] = false;
+            active_children[parent[z]]--;
+            groups += active_children[z] + active[parent[z]] - 1;
         }
         else
         {
-            for(uint32_t n : next_to[z])
-                active_next_to[n]++;
-            groups -= active_next_to[z] - 1;
+            active[z] = true;
+            active_children[parent[z]]++;
+            groups -= active_children[z] + active[parent[z]] - 1;
         }
         cout << groups << endl;
     }
