@@ -24,6 +24,7 @@ int main()
     static array<bool, MAX> visited;
     to_visit.push(0);
     visited[0] = true;
+    parent[0] = MAX;
     while(not to_visit.empty())
     {
         uint32_t current = to_visit.front(); to_visit.pop();
@@ -49,15 +50,25 @@ int main()
         if(iz > 0)
         {
             active[z] = false;
-            active_children[parent[z]]--;
-            groups += active_children[z] + active[parent[z]] - 1;
+            if(z != 0)
+            {
+                active_children[parent[z]]--;
+                groups += active_children[z] + active[parent[z]] - 1;
+            }
+            else
+                groups += active_children[z] - 1;
         }
         else
         {
             active[z] = true;
-            active_children[parent[z]]++;
-            groups -= active_children[z] + active[parent[z]] - 1;
+            if(z != 0)
+            {
+                active_children[parent[z]]++;
+                groups -= active_children[z] + active[parent[z]] - 1;
+            }
+            else
+                groups -= active_children[z] - 1;
         }
-        cout << groups << endl;
+        cout << groups << '\n';
     }
 }
