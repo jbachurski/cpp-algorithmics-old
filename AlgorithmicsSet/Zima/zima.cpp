@@ -17,8 +17,11 @@ int main()
     for(uint32_t i = 0; i < n - 1; i++)
     {
         R[i+1] = max(R[i+1], R[i]);
-        if(i+T[i]+1 < MAX)
+        if(i+T[i]+1 < n)
             R[i+T[i]+1] = max(R[i+T[i]+1], R[i] + 1);
+        for(uint32_t j = 0; j < n; j++)
+            cout << R[j] << " ";
+        cout << endl;
     }
     cout << R[n - 1];
 }
