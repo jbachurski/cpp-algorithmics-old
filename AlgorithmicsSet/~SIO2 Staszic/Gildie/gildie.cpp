@@ -19,44 +19,43 @@ int main()
         graph[a].push_back(b);
         graph[b].push_back(a);
     }
-    set<uint32_t> to_visit_all;
-    static array<bool, MAX> visited;
-    static array<char, MAX> status;
+    queue<uint32_t> to_visit_all;
+    static array<bool, MAX> visited, status;
     for(uint32_t i = 0; i < n; i++)
-        to_visit_all.insert(i);
+        to_visit_all.push(i);
+    static array<dt, MAX> check;
     while(not to_visit_all.empty())
     {
-        uint32_t start = *to_visit_all.begin();
-        to_visit_all.erase(to_visit_all.begin());
+        uint32_t start = to_visit_all.front(); to_visit_all.pop();
+        if(visited[start]) continue;
         queue<uint32_t> to_visit;
         to_visit.push(start);
         visited[start] = true;
-        status[start] = 'K';
+        status[start] = 0;
         while(not to_visit.empty())
         {
             uint32_t current = to_visit.front();
             to_visit.pop();
+            if(graph[current].empty()) goto fail;
             for(uint32_t c : graph[current])
             {
                 if(not visited[c])
                 {
-                    to_visit_all.erase(c);
                     to_visit.push(c);
                     visited[c] = true;
-                    status[c] = status[current] == 'K' ? 'S' : 'K';
+                    status[c] = status[current] == 0 ? 1 : 0;
                 }
             }
         }
     }
-    static array<dt, MAX> check;
     for(uint32_t i = 0; i < n; i++)
     {
-        if(status[i] == 'K') check[i].k = true;
-        else if(status[i] == 'S') check[i].s = true;
+        if(status[i] == 0) check[i].k = true;
+        else if(status[i] == 1) check[i].s = true;
         for(uint32_t c : graph[i])
         {
-            if(status[i] == 'K') check[c].k = true;
-            else if(status[i] == 'S') check[c].s = true;
+            if(status[i] == 0) check[c].k = true;
+            else if(status[i] == 1) check[c].s = true;
         }
     }
     for(uint32_t i = 0; i < n; i++)
@@ -66,7 +65,7 @@ int main()
     }
     cout << "TAK" << '\n';
     for(uint32_t i = 0; i < n; i++)
-        cout << status[i] << '\n';
+        cout << (status[i] ? 'S' : 'K') << '\n';
     return 0;
 fail:
     cout << "NIE";
