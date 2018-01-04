@@ -25,6 +25,7 @@ int main()
         for(uint16_t j = i+1; j < n; j++)
         {
             uint64_t v = C(0, i) + C(i+1, j) + C(j+1, n);
+            cout << i << " : " << j << " -> " << v << endl;
             result = min(result, v);
             if(v == result)
                 r = make_pair(i, j);
@@ -32,5 +33,4 @@ int main()
     }
     cout << result << endl;
     cout << r.first << " " << r.second << endl;
-
 }
