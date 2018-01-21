@@ -32,7 +32,7 @@ int main()
         }
     }
     static uint32_t counts[MAX_E];
-    uint32_t diff_max = 0, diff = 0, diff_sum = 0;
+    uint64_t diff_max = 0, diff = 0, diff_sum = 0;
     for(x = 0; x < k; ++x)
     {
         uint32_t o = x*m, c=o+k;
@@ -47,7 +47,7 @@ int main()
     for(i = 0; i < c01; ++i)
     {
         static uint32_t counts_at_row[MAX_E];
-        uint32_t diff_at_row = diff;
+        uint64_t diff_at_row = diff;
         copy(counts, counts + MAX_E, counts_at_row);
         uint32_t c1 = n - k;
         for(j = 0; j < c1; ++j)

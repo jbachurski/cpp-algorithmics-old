@@ -1,64 +1,78 @@
 #include <bits/stdc++.h>
-#define MAX 500000
-#define RMAX 1000000007
-#define MINF(a, b) (a) < (b) ? (a) : (b)
 
 using namespace std;
 
-struct dir_t
+typedef pair<uint32_t, uint32_t> pair_u32;
+
+const size_t MAX = 500000;
+const uint32_t LIM = 1000000007;
+
+struct disjoint_set
 {
-    int64_t left, right, up, down;
+    array<uint32_t, MAX> parent, nrank, uheight;
+    array<uint64_t, MAX> subresult;
+    disjoint_set(uint32_t init = MAX)
+    {
+        for(uint32_t i = 0; i < init; i++)
+            parent[i] = i, subresult[i] = 1;
+    }
+    uint32_t find_root(uint32_t node)
+    {
+        if(parent[node] == node)
+            return parent[node];
+        parent[node] = find_root(parent[node]);
+        return parent[node];
+    }
+    bool unite(uint32_t first_node, uint32_t second_node, uint32_t cheight)
+    {
+        uint32_t first = find_root(first_node),
+                 second = find_root(second_node), root;
+        if(first == second)
+            return false;
+        if(nrank[second] > nrank[first])
+        {
+            nrank[second]++;
+            parent[first] = second;
+            root = second;
+        }
+        else
+        {
+            nrank[first]++;
+            parent[second] = first;
+            root = first;
+        }
+        subresult[root] = (((subresult[first] + cheight - uheight[first]) % LIM) * ((subresult[second] + cheight - uheight[second])) % LIM) % LIM;
+        uheight[root] = cheight;
+        return true;
+    }
 };
 
 int main()
 {
-    ios_base::sync_with_stdio(false); cin.tie(0);
-    int64_t w, h, max_h;
-    cin >> h >> w >> max_h;
-
-    vector< vector<dir_t> > borders(h, vector<dir_t>(w));
-    vector< vector<int64_t> > least_border(h, vector<int64_t>(w));
-    int64_t i, j, c;
-    for(i = 0; i < h; i++) for(j = 0; j < w; j++)
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    uint32_t height, width, max_height;
+    cin >> height >> width >> max_height;
+    map<uint32_t, vector<pair_u32> > dams;
+    for(uint32_t y = 0; y < height; y++) for(uint32_t x = 0; x < width - 1; x++)
     {
-        borders[i][j].left = borders[i][j].right = borders[i][j].up = borders[i][j].down = max_h;
-        least_border[i][j] = max_h;
+        uint32_t h;
+        cin >> h;
+        dams[h].emplace_back(y*width + x, y*width + x + 1);
     }
-    if(w > 1)
+    for(uint32_t y = 0; y < height - 1; y++) for(uint32_t x = 0; x < width; x++)
     {
-        for(i = 0; i < h; i++)
-        {
-            for(j = 0; j < w - 1; j++)
-            {
-                cin >> c;
-                least_border[i][j] = MINF(least_border[i][j], c);
-                least_border[i][j+1] = MINF(least_border[i][j+1], c);
-                borders[i][j].right = c;
-                borders[i][j+1].left = c;
-            }
-        }
+        uint32_t h;
+        cin >> h;
+        dams[h].emplace_back(y*width + x, (y+1)*width + x);
     }
-    if(h > 1)
+    static disjoint_set dset(width * height);
+    for(pair<uint32_t, vector<pair_u32> > mpair : dams)
     {
-        for(i = 0; i < h - 1; i++)
-        {
-            for(j = 0; j < w; j++)
-            {
-                cin >> c;
-                least_border[i][j] = MINF(least_border[i][j], c);
-                least_border[i+1][j] = MINF(least_border[i+1][j], c);
-                borders[i][j].down = c;
-                borders[i+1][j].up = c;
-            }
-        }
+        uint32_t cheight = mpair.first;
+        vector<pair_u32>& cdams = mpair.second;
+        for(pair_u32 p : cdams)
+            dset.unite(p.first, p.second, cheight);
     }
-    int64_t result = 1, min_border = max_h;
-    for(i = 0; i < h; i++) for(j = 0; j < w; j++)
-    {
-        min_border = MINF(least_border[i][j], min_border);
-        result *= (least_border[i][j] + 1);
-        if(result > RMAX) result %= RMAX;
-    }
-    result += max_h - min_border;
-    cout << result % RMAX;
+    uint32_t root = dset.find_root(0);
+    cout << (dset.subresult[root] + max_height - dset.uheight[root]) % LIM;
 }

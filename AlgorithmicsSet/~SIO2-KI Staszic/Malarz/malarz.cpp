@@ -2,110 +2,98 @@
 
 using namespace std;
 
-const size_t MAX = 1000000000;
-const size_t TSIZE = (1u << 5) + 1;
-const size_t MASK_T = (1u << 31);
-const size_t MASK_V = (1u << 31) - 1;
+const size_t MAXQ = 10;//5e5;
+const size_t MAX = MAXQ*2;
+const size_t TSIZE = 1 << 5;//21;
 
-struct bit_toggle_tree
+struct interval_tree
 {
-    array<uint32_t, TSIZE> nodes;
-    void toggle_interval(uint32_t node, uint32_t tbegin, uint32_t tend, uint32_t sbegin, uint32_t send)
+    uint32_t nodes = MAX;
+    array<bool, TSIZE> toggle;
+    array<uint32_t, TSIZE> values;
+    void interval_toggle(uint32_t node, uint32_t tbegin, uint32_t tend, uint32_t sbegin, uint32_t send)
     {
-        cout << "toggle_interval " << node << " " << tbegin << " " << tend << " " << sbegin << " " << send << " ";
         if(tend < sbegin or send < tbegin)
-            cout << "-> 0" << endl;
+            return;
         else if(sbegin <= tbegin and tend <= send)
-        {
-            cout << "-> 1" << endl;
-            if(not (nodes[node] & MASK_T))
-                nodes[node] = (tend - tbegin + 1 - (nodes[node] & MASK_V));
-            nodes[node*2] ^= MASK_T;
-            nodes[node*2+1] ^= MASK_T;
-        }
+            toggle[node] = ~toggle[node];
         else
         {
-            cout << "-> {} " << (nodes[node] & MASK_T) << endl;
-            if(not (nodes[node] & MASK_T))
-            {
-                toggle_interval(node*2, tbegin, (tbegin+tend)/2, sbegin, send);
-                toggle_interval(node*2+1, (tbegin+tend)/2+1, tend, sbegin, send);
-                nodes[node] = (nodes[node*2]&MASK_V) + (nodes[node*2+1]&MASK_V);
-            }
-            else
-            {
-                nodes[node] ^= MASK_T;
-                nodes[node] = (tend - tbegin + 1 - (nodes[node] & MASK_V));
-            }
+            interval_toggle(2*node+1, tbegin, (tbegin+tend)/2, sbegin, send);
+            interval_toggle(2*node+2, (tbegin+tend)/2+1, tend, sbegin, send);
         }
     }
-    void toggle_interval(uint32_t sbegin, uint32_t send)
+    void interval_toggle(uint32_t sbegin, uint32_t send)
     {
-        return toggle_interval(1, 0, TSIZE/2-1, sbegin, send);
+        interval_toggle(0, 0, TSIZE/2-1, sbegin, send);
     }
-
-    uint32_t find_sum(uint32_t node, uint32_t tbegin, uint32_t tend, uint32_t sbegin, uint32_t send)
+    void toggle_queued(uint32_t node, uint32_t tbegin, uint32_t tend)
     {
-        cout << "find_sum " << node << " " << tbegin << " " << tend << " " << sbegin << " " << send << " ";
-        if(nodes[node] & MASK_T)
+        if(toggle[node])
         {
-            nodes[node] = (tend - tbegin + 1 - (nodes[node] & MASK_V));
-            nodes[node*2] ^= MASK_T;
-            nodes[node*2+1] ^= MASK_T;
+            cout << nodes - 1 << " " << tend << " " << tbegin << " " << values[node] << endl;
+            values[node] = (min(nodes - 1, tend) - tbegin + 1) - values[node];
+            toggle[2*node+1] = ~toggle[2*node+1];
+            toggle[2*node+2] = ~toggle[2*node+2];
+            toggle[node] = false;
         }
+    }
+    uint32_t interval_value(uint32_t node, uint32_t tbegin, uint32_t tend, uint32_t sbegin, uint32_t send)
+    {
         if(tend < sbegin or send < tbegin)
-        {
-            cout << "-> 0" << endl;
             return 0;
-        }
         else if(sbegin <= tbegin and tend <= send)
         {
-            cout << "-> " << (nodes[node] & MASK_V) << endl;
-            return nodes[node] & MASK_V;
+            toggle_queued(node, tbegin, tend);
+            return values[node];
         }
         else
         {
-            cout << "-> {}" << endl;
-            return find_sum(node*2, tbegin, (tbegin+tend)/2, sbegin, send) +
-                   find_sum(node*2+1, (tbegin+tend)/2+1, tend, sbegin, send);
+            toggle_queued(node, tbegin, tend);
+            return interval_value(2*node+1, tbegin, (tbegin+tend)/2, sbegin, send) +
+                   interval_value(2*node+2, (tbegin+tend)/2+1, tend, sbegin, send);
         }
     }
-
-    uint32_t find_sum(uint32_t sbegin, uint32_t send)
+    uint32_t interval_value(uint32_t sbegin, uint32_t send)
     {
-        return find_sum(1, 0, TSIZE/2-1, sbegin, send);
+        return interval_value(0, 0, TSIZE/2-1, sbegin, send);
     }
 };
 
 int main()
 {
     ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
-    uint32_t n, m;
-    cin >> n >> m;
-    static bit_toggle_tree tree;
-    tree.toggle_interval(0, n-1);
-    for(uint32_t i = 1; i < TSIZE-1; i++)
+    uint32_t n, q;
+    cin >> n >> q;
+    static array<bool, MAXQ> T;
+    static array<array<uint32_t, 2>, MAXQ> E;
+    static array<uint32_t, MAX> V; uint32_t vi = 0;
+    for(uint32_t i = 0; i < q; i++)
     {
-        cout << "(" << ((bool)(tree.nodes[i] & MASK_T)) << ", " << (tree.nodes[i] & MASK_V) << "); ";
-        if(__builtin_popcount(i+1) == 1)
-            cout << endl;
+        char t; uint32_t a, b;
+        cin >> t >> a >> b; a--; b--;
+        T[i] = (t == '*');
+        E[i][0] = a; E[i][1] = b;
+        V[vi++] = a; V[vi++] = b;
     }
-    cout << endl;
-    cout << tree.find_sum(0, n-1) << endl;
-    for(uint32_t mi = 0; mi < m; mi++)
+    sort(V.begin(), V.begin() + vi);
+    unordered_map<uint32_t, uint32_t> M;
+    for(uint32_t i = 0, f = 0; i < vi; i++)
     {
-        char spec; uint32_t a, b;
-        cin >> spec >> a >> b; a--; b--;
-        if(spec == '*')
-            tree.toggle_interval(a, b);
-        else if(spec == '?')
-            cout << tree.find_sum(a, b) << endl;
-        for(uint32_t i = 1; i < TSIZE-1; i++)
-        {
-            cout << "(" << ((bool)(tree.nodes[i] & MASK_T)) << ", " << (tree.nodes[i] & MASK_V) << "); ";
-            if(__builtin_popcount(i+1) == 1)
-                cout << endl;
-        }
-        cout << endl;
+        if(i > 0 and V[i] == V[i-1]) f++;
+        M[V[i]] = i - f;
+    }
+    static interval_tree tree; tree.nodes = V[vi-1] + 1;
+    for(uint32_t i = 0; i < q; i++)
+    {
+        cout << T[i] << " " << M[E[i][0]] << " " <<  M[E[i][1]] << endl;
+        if(T[i])
+            tree.interval_toggle(M[E[i][0]], M[E[i][1]]);
+        else
+            cout << tree.interval_value(M[E[i][0]], M[E[i][1]]) << endl;
+        for(uint32_t j = 0; j < TSIZE; j++)
+            cout << tree.values[j] << " "; cout << endl;
+        for(uint32_t j = 0; j < TSIZE; j++)
+            cout << tree.toggle[j] << " "; cout << endl;
     }
 }

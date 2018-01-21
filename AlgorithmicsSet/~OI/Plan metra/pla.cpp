@@ -105,6 +105,11 @@ int main()
         }
         tunnels.push_back(tunnel_t(bdists[bdists.size() - 1].second, N - 1, cost_first[N - 1] - bdists[bdists.size() - 1].first));
     }
+    else
+    {
+        tunnels.push_back(tunnel_t(0, N - 1, dist));
+    }
+
     // Create tunnels of stations between first and last with common added
     for(i = 0; i < N; i++)
     {

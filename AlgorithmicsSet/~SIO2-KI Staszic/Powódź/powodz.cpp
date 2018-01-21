@@ -1,8 +1,9 @@
-#include <iostream>
+#include <bits/stdc++.h>
 
 using namespace std;
 
-template<size_t MAX = 1e5>
+const size_t MAX = 1000;
+
 struct disjoint_set
 {
     array<uint32_t, MAX> parent, nrank;
@@ -34,3 +35,11 @@ struct disjoint_set
         return parent[node];
     }
 };
+
+int main()
+{
+    uint32_t height, width;
+    cin >> height >> width;
+    static array<uint32_t, MAX*MAX> A;
+    static array<bool, MAX*MAX> B;
+}
