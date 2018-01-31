@@ -1,25 +1,27 @@
 import os, random
 import itertools
 
-INSTANT_RUN = True
-FORCE_FILENAME = "tests/temp.{ext}"
+INSTANT_RUN = False
+FORCE_FILENAME = None
 SELF_TEST = False
 SAFE_TEST = False
 
-test_filename_pattern = "tests/testd{i}.{ext}"
+test_filename_pattern = "tests/testf{i}.{ext}"
 n = 10**5
-bounds = (-200, 200)
-test_iterable = range(5)
+bounds = (-170, 170)
+test_iterable = range(10)
 
 def randpoints(n=n, bounds=bounds, safe=SAFE_TEST):
     if SAFE_TEST:
         if (bounds[1] - bounds[0] + 1)**2 <= n:
             raise ValueError("Can't assign this amount of unique points")
         result = []
+        result_set = set()
         while len(result) < n:
             current = (random.randint(*bounds), random.randint(*bounds))
-            if current not in result:
+            if current not in result_set:
                 result.append(current)
+                result_set.add(current)
         return result
     else:
         return [(random.randint(*bounds), random.randint(*bounds)) for _ in range(n)]
@@ -27,8 +29,9 @@ def randpoints(n=n, bounds=bounds, safe=SAFE_TEST):
 for i in test_iterable:
     print("Generating  test")
     points = randpoints()#[(int(p.split(" ")[0]), int(p.split(" ")[1])) for p in IN.split("\n")]
-    result = 0
+    result = None
     if SELF_TEST:
+        result = 0
         print("Test self")
         R = set()
         for pi, p1 in enumerate(points):
@@ -55,8 +58,8 @@ for i in test_iterable:
             file.write("{} {}\n".format(x, y))
     with open(test_filename.format(i=i, ext="out"), "w") as file:
         file.write(str(result))
-    print("Test run")
     if INSTANT_RUN and SELF_TEST:
+        print("Test run")
         if SELF_TEST:
             os.system("thetacheck -a prostokaty.exe -o {} > tmp.thetacheck.out".format(test_filename.format(i=i, ext="")[:-1]))
             if not open("tmp.thetacheck.out", "r").read().strip().endswith("(100.0%)"):

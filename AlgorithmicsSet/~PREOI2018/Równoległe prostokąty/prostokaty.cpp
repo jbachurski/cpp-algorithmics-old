@@ -33,38 +33,56 @@ void uprint(V<T, Args...>& it)
 
 int main()
 {
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
     uint32_t n;
     cin >> n;
-    static array<point_t, MAX> P;
-    map<int32_t, vector<int32_t> > V, H; // Horizontal, Vertical
-    unordered_map<int32_t, unordered_set<int32_t> > HS;
+    map<int32_t, vector<int32_t> > V;
     for(uint32_t i = 0; i < n; i++)
     {
-        cin >> P[i].first >> P[i].second;
-        V[P[i].first].push_back(P[i].second);
-        H[P[i].second].push_back(P[i].first);
-        HS[P[i].second].insert(P[i].first);
+        int32_t x, y;
+        cin >> x >> y;
+        V[x].push_back(y);
     }
-    sort(P.begin(), P.begin() + n);
-    for(pair<int32_t, vector<int32_t> > p : V)
-        sort(p.second.begin(), p.second.end());
-    for(pair<int32_t, vector<int32_t> > p : H)
-        sort(p.second.begin(), p.second.end());
+    for(auto it = V.begin(); it != V.end(); it++)
+        sort(it->second.begin(), it->second.end());
     uint32_t result = 0;
-    for(pair<int32_t, vector<int32_t> > cp : H)
+    for(auto it1 = V.begin(); it1 != V.end(); it1++)
     {
-        int32_t& y1 = cp.first;
-        vector<int32_t>& x_values = cp.second;
-        for(int32_t x1 : x_values)
+        vector<int32_t>* v1, *v2;
+        int32_t x1 = it1->first;
+        for(auto it2 = it1; it2 != V.end(); it2++)
         {
-            for(int32_t y2 : V[x1])
+            if(it1 == it2) continue;
+            int32_t x2 = it2->first;
+            if(it1->second.size() > it2->second.size())
+                v2 = &it1->second, v1 = &it2->second;
+            else
+                v1 = &it1->second, v2 = &it2->second;
+            uint32_t pairs = 0;
+            if(v1->size() > 40 and v2->size() > 40 and v2->size() / v1->size() >= 6)
             {
-                if(y2 > y1) for(int32_t x2 : H[y2])
+                auto itb = v2->begin();
+                for(int32_t y1 : *v1)
                 {
-                    if(x2 > x1 and HS[y1].find(x2) != HS[y1].end() and HS[y2].find(x1) != HS[y2].end())
-                        result++;
+                    if(*(itb = lower_bound(itb, v2->end(), y1)) == y1)
+                        pairs++;
+                    if(itb == v2->end()) break;
                 }
             }
+            else
+            {
+                uint32_t i = 0, j = 0;
+                while(i < v1->size() or j < v2->size())
+                {
+                    if(i < v1->size() and j < v2->size() and (*v1)[i] == (*v2)[j])
+                        pairs++, i++, j++;
+                    else if(j >= v2->size() or (i < v1->size() and (*v1)[i] < (*v2)[j]))
+                        i++;
+                    else
+                        j++;
+                }
+            }
+            result += pairs * (pairs - 1) / 2;
         }
     }
     cout << result;
